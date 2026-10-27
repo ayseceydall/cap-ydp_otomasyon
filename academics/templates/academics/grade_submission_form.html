@@ -1,0 +1,35 @@
+{% extends "students/base.html" %}
+
+{% block title %}Dönem Sonu Notu Gir{% endblock %}
+
+{% block content %}
+    <h1>Dönem Sonu Notu Gir</h1>
+
+    <p>
+        Onaylanmış derslerinden birini seç ve dönem sonu notunu gir.
+        Gönderdiğin not, koordinatör tarafından incelenene kadar
+        kesinleşmez.
+    </p>
+
+    {% if not has_eligible_courses %}
+        <p>
+            Not gönderebileceğin uygun bir ders bulunmuyor.
+            Ders kaydının önce koordinatör tarafından onaylanmış
+            olması gerekir.
+        </p>
+    {% else %}
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+            <button type="submit">Notu onaya gönder</button>
+        </form>
+    {% endif %}
+
+    <p>
+        <a href="{% url 'grade_submission_list' %}">
+            Not gönderimlerime dön
+        </a>
+    </p>
+{% endblock %}

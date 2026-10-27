@@ -27,4 +27,15 @@ path(
     name="course_attempt_decide",
 ),
 
+path(
+    "notlarim/",
+    views.grade_submission_list,
+    name="grade_submission_list",
+),
+path(
+    "notlarim/yeni/",
+    views.grade_submission_create,
+    name="grade_submission_create",
+),
+
 ]

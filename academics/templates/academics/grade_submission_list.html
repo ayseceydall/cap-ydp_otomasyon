@@ -1,0 +1,62 @@
+{% extends "students/base.html" %}
+
+{% block title %}Not Gönderimlerim{% endblock %}
+
+{% block content %}
+    <h1>Not Gönderimlerim</h1>
+
+    <p>
+        <a class="button" href="{% url 'grade_submission_create' %}">
+            + Not gir
+        </a>
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ders</th>
+                <th>Dönem</th>
+                <th>Not</th>
+                <th>Onay durumu</th>
+                <th>Ret gerekçesi</th>
+                <th>Gönderim tarihi</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for submission in submissions %}
+                <tr>
+                    <td>
+                        {{ submission.course_attempt.course.course_code }}
+                        -
+                        {{ submission.course_attempt.course.course_name }}
+                    </td>
+
+                    <td>{{ submission.course_attempt.term }}</td>
+
+                    <td>{{ submission.grade }}</td>
+
+                    <td>
+                        {{ submission.get_approval_status_display }}
+                    </td>
+
+                    <td>
+                        {% if submission.approval_status == "REJECTED" %}
+                            {{ submission.rejection_reason }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td>{{ submission.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">
+                        Henüz not gönderimin bulunmuyor.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

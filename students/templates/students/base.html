@@ -95,6 +95,8 @@
         {% elif user.role == "student" %}
     <a href="{% url 'my_profile' %}">Öğrenci panelim</a>
     <a href="{% url 'course_attempt_list' %}">Derslerim</a>
+    <a href="{% url 'grade_submission_list' %}">Notlarım</a>
+     <a href="{% url 'grade_submission_list' %}">Notlarım</a>
 
         {% elif user.role == "chair" %}
             <a href="{% url 'chair_dashboard' %}">İzleme paneli</a>

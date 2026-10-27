@@ -1,6 +1,11 @@
 from django import forms
 
-from .models import Course, AcademicTerm, CourseAttempt
+from .models import (
+    Course,
+    AcademicTerm,
+    CourseAttempt,
+    GradeSubmission,
+)
 
 
 class CourseAttemptCreateForm(forms.ModelForm):
@@ -52,3 +57,43 @@ class CourseAttemptCreateForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+class GradeSubmissionForm(forms.ModelForm):
+
+    course_attempt = forms.ModelChoiceField(
+        queryset=CourseAttempt.objects.none(),
+        label="Ders",
+        empty_label="Ders seçiniz",
+    )
+
+    grade = forms.DecimalField(
+        label="Dönem sonu notu",
+        min_value=0,
+        max_value=100,
+        max_digits=5,
+        decimal_places=2,
+        help_text="Notu 0 ile 100 arasında giriniz.",
+    )
+
+    class Meta:
+        model = GradeSubmission
+        fields = ["course_attempt", "grade"]
+
+    def __init__(
+        self,
+        *args,
+        student=None,
+        eligible_attempts=None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        if student is not None and eligible_attempts is not None:
+            self.fields["course_attempt"].queryset = (
+                eligible_attempts.filter(
+                    student=student,
+                    approval_status=(
+                        CourseAttempt.ApprovalStatus.APPROVED
+                    ),
+                )
+            )

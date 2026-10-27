@@ -340,3 +340,105 @@ class CourseAttempt(models.Model):
             "course__course_code",
             "created_at",
         ]        
+
+
+class GradeSubmission(models.Model):
+
+    class ApprovalStatus(models.TextChoices):
+        PENDING = "PENDING", "Onay bekliyor"
+        APPROVED = "APPROVED", "Onaylandı"
+        REJECTED = "REJECTED", "Reddedildi"
+
+    class ResultStatus(models.TextChoices):
+        PASSED = "PASSED", "Geçti"
+        FAILED = "FAILED", "Kaldı"
+
+    course_attempt = models.ForeignKey(
+        CourseAttempt,
+        on_delete=models.PROTECT,
+        related_name="grade_submissions",
+        verbose_name="Ders denemesi",
+    )
+
+    grade = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        verbose_name="Bildirilen not",
+    )
+
+    result_status = models.CharField(
+        max_length=6,
+        choices=ResultStatus.choices,
+        null=True,
+        blank=True,
+        verbose_name="Koordinatörün belirlediği sonuç",
+    )
+
+    approval_status = models.CharField(
+        max_length=10,
+        choices=ApprovalStatus.choices,
+        default=ApprovalStatus.PENDING,
+        verbose_name="Not onay durumu",
+    )
+
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="grade_submissions_sent",
+        verbose_name="Gönderen öğrenci",
+    )
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="grade_submissions_reviewed",
+        verbose_name="İnceleyen koordinatör",
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="İnceleme tarihi",
+    )
+
+    rejection_reason = models.TextField(
+        blank=True,
+        verbose_name="Ret gerekçesi",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Gönderim tarihi",
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Güncellenme tarihi",
+    )
+
+    def __str__(self):
+        return (
+            f"{self.course_attempt.student.student_no} - "
+            f"{self.course_attempt.course.course_code} - "
+            f"{self.get_approval_status_display()}"
+        )
+
+    class Meta:
+        verbose_name = "Not gönderimi"
+        verbose_name_plural = "Not gönderimleri"
+        ordering = ["-created_at"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course_attempt"],
+                condition=models.Q(approval_status="PENDING"),
+                name="one_pending_grade_per_attempt",
+            ),
+            models.UniqueConstraint(
+                fields=["course_attempt"],
+                condition=models.Q(approval_status="APPROVED"),
+                name="one_approved_grade_per_attempt",
+            ),
+        ]

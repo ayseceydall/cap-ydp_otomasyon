@@ -5,8 +5,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from students.models import StudentProfile
 
-from .forms import CourseAttemptCreateForm
-from .models import CourseAttempt
+from .forms import (
+    CourseAttemptCreateForm,
+    GradeSubmissionForm,
+)
+from .models import CourseAttempt, GradeSubmission
 
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -157,3 +160,78 @@ def decide_course_attempt(request, pk):
     messages.success(request, "İşlem başarıyla kaydedildi.")
 
     return redirect("coordinator_course_attempts")
+
+
+@login_required(login_url="/giris/")
+def grade_submission_list(request):
+    student = get_current_student(request)
+
+    submissions = GradeSubmission.objects.filter(
+        course_attempt__student=student
+    ).select_related(
+        "course_attempt__course",
+        "course_attempt__term",
+    ).order_by("-created_at")
+
+    return render(
+        request,
+        "academics/grade_submission_list.html",
+        {"submissions": submissions},
+    )
+
+
+@login_required(login_url="/giris/")
+def grade_submission_create(request):
+    student = get_current_student(request)
+
+    eligible_attempts = CourseAttempt.objects.filter(
+        student=student,
+        approval_status=CourseAttempt.ApprovalStatus.APPROVED,
+    ).exclude(
+        grade_submissions__approval_status__in=[
+            GradeSubmission.ApprovalStatus.PENDING,
+            GradeSubmission.ApprovalStatus.APPROVED,
+        ]
+    ).select_related(
+        "course",
+        "term",
+    ).distinct()
+
+    if request.method == "POST":
+        form = GradeSubmissionForm(
+            request.POST,
+            student=student,
+            eligible_attempts=eligible_attempts,
+        )
+
+        if form.is_valid():
+            submission = form.save(commit=False)
+
+            submission.submitted_by = request.user
+            submission.approval_status = (
+                GradeSubmission.ApprovalStatus.PENDING
+            )
+
+            submission.save()
+
+            messages.success(
+                request,
+                "Notun koordinatörün onayına gönderildi.",
+            )
+
+            return redirect("grade_submission_list")
+
+    else:
+        form = GradeSubmissionForm(
+            student=student,
+            eligible_attempts=eligible_attempts,
+        )
+
+    return render(
+        request,
+        "academics/grade_submission_form.html",
+        {
+            "form": form,
+            "has_eligible_courses": eligible_attempts.exists(),
+        },
+    )

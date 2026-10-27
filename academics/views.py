@@ -14,6 +14,7 @@ from .models import CourseAttempt, GradeSubmission
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from documents.models import StudentDocument
 
 
 def get_current_student(request):
@@ -206,21 +207,53 @@ def grade_submission_create(request):
         )
 
         if form.is_valid():
-            submission = form.save(commit=False)
+            attempt = form.cleaned_data["course_attempt"]
 
-            submission.submitted_by = request.user
-            submission.approval_status = (
-                GradeSubmission.ApprovalStatus.PENDING
+            # Öğrencinin ilgili döneme ait ÇAP/YDP
+            # transkriptinin mevcut ve erişilebilir
+            # bir dosya olması gerekir.
+            transcript_documents = StudentDocument.objects.filter(
+                student=student,
+                document_type=(
+                    StudentDocument.DocumentType.CAP_YDP_TRANSCRIPT
+                ),
+                academic_term=attempt.term,
+                status__in=[
+                    StudentDocument.Status.PENDING,
+                    StudentDocument.Status.APPROVED,
+                ],
             )
 
-            submission.save()
-
-            messages.success(
-                request,
-                "Notun koordinatörün onayına gönderildi.",
+            transcript_exists = any(
+                document.file
+                and document.file.storage.exists(document.file.name)
+                for document in transcript_documents
             )
 
-            return redirect("grade_submission_list")
+            if not transcript_exists:
+                form.add_error(
+                    "course_attempt",
+                    (
+                        f"{attempt.term} dönemi için önce "
+                        "ÇAP/YDP transkriptini yüklemelisin."
+                    ),
+                )
+            else:
+                submission = form.save(commit=False)
+
+                submission.submitted_by = request.user
+                submission.approval_status = (
+                    GradeSubmission.ApprovalStatus.PENDING
+                )
+
+                submission.save()
+
+                messages.success(
+                    request,
+                    "Notun koordinatörün onayına gönderildi.",
+                )
+
+                return redirect("grade_submission_list")
 
     else:
         form = GradeSubmissionForm(

@@ -1,0 +1,20 @@
+{% extends "students/base.html" %}
+
+{% block title %}Yeni Öğrenci Ekle{% endblock %}
+
+{% block content %}
+    <h1>Yeni Öğrenci Ekle</h1>
+
+    <p>
+        Bu form öğrenci hesabını ve öğrenci kartını birlikte oluşturur.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">Öğrenciyi kaydet</button>
+        <a href="{% url 'student_list' %}">Vazgeç</a>
+    </form>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "students/base.html" %}
+
+{% block title %}Bölüm Başkanı İzleme Paneli{% endblock %}
+
+{% block content %}
+    <h1>Bölüm Başkanı İzleme Paneli</h1>
+
+    <p>
+        Bu panel salt okunurdur. Buradan kayıt eklenemez veya değiştirilemez.
+    </p>
+
+    <h2>Kayıtlı Öğrenciler</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Öğrenci numarası</th>
+                <th>Ad soyad</th>
+                <th>Program</th>
+                <th>Kabul dönemi</th>
+                <th>Durum</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for student in students %}
+                <tr>
+                    <td>{{ student.student_no }}</td>
+                    <td>
+                        {{ student.user.get_full_name|default:student.user.username }}
+                    </td>
+                    <td>{{ student.get_program_type_display }}</td>
+                    <td>
+                        {{ student.acceptance_academic_year }}
+                        {{ student.get_acceptance_term_display }}
+                    </td>
+                    <td>{{ student.get_status_display }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">Henüz öğrenci kaydı bulunmuyor.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

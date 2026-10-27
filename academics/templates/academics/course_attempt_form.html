@@ -1,0 +1,21 @@
+{% extends "students/base.html" %}
+
+{% block title %}Ders Seç{% endblock %}
+
+{% block content %}
+    <h1>Ders Seçimi</h1>
+
+    <p>
+        Katalogdan dersi ve hangi akademik dönemde alacağını seç.
+        Gönderdiğin kayıt koordinatör tarafından incelenecek.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">Onaya gönder</button>
+        <a href="{% url 'course_attempt_list' %}">Vazgeç</a>
+    </form>
+{% endblock %}

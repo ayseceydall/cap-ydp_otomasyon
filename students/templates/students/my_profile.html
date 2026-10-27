@@ -1,0 +1,45 @@
+{% extends "students/base.html" %}
+
+{% block title %}Öğrenci Panelim{% endblock %}
+
+{% block content %}
+    <h1>Öğrenci Panelim</h1>
+
+    <p>Merhaba, {{ student.user.get_full_name|default:student.user.username }}.</p>
+
+    <h2>Öğrenci Bilgilerim</h2>
+
+    <table>
+        <tbody>
+            <tr>
+                <th>Öğrenci numarası</th>
+                <td>{{ student.student_no }}</td>
+            </tr>
+            <tr>
+                <th>Ad soyad</th>
+                <td>{{ student.user.get_full_name|default:student.user.username }}</td>
+            </tr>
+            <tr>
+                <th>E-posta</th>
+                <td>{{ student.user.email }}</td>
+            </tr>
+            <tr>
+                <th>Program</th>
+                <td>{{ student.get_program_type_display }}</td>
+            </tr>
+            <tr>
+                <th>Kabul dönemi</th>
+                <td>
+                    {{ student.acceptance_academic_year }}
+                    {{ student.get_acceptance_term_display }}
+                </td>
+            </tr>
+            <tr>
+                <th>Durum</th>
+                <td>{{ student.get_status_display }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Ders, belge ve not takip özelliklerini sonraki adımlarda ekleyeceğiz.</p>
+{% endblock %}

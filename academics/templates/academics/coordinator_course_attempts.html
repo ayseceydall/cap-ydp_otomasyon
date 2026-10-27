@@ -1,0 +1,78 @@
+{% extends "students/base.html" %}
+
+{% block title %}Ders Onayları{% endblock %}
+
+{% block content %}
+    <h1>Bekleyen Ders Kayıtları</h1>
+
+    <p>
+        Öğrencilerin gönderdiği ders kayıtlarını inceleyebilir,
+        onaylayabilir veya gerekçeyle reddedebilirsin.
+    </p>
+
+    {% for attempt in attempts %}
+        <section style="border: 1px solid #ddd; padding: 18px;
+                        margin-bottom: 20px; border-radius: 8px;">
+
+            <h2>
+                {{ attempt.course.course_code }}
+                — {{ attempt.course.course_name }}
+            </h2>
+
+            <p>
+                <strong>Öğrenci:</strong>
+                {{ attempt.student.student_no }}
+                — {{ attempt.student.user.get_full_name|default:attempt.student.user.username }}
+            </p>
+
+            <p>
+                <strong>Akademik dönem:</strong>
+                {{ attempt.term }}
+            </p>
+
+            <p>
+                <strong>Ders durumu:</strong>
+                {{ attempt.get_academic_status_display }}
+            </p>
+
+            <p>
+                <strong>Gönderim tarihi:</strong>
+                {{ attempt.created_at|date:"d.m.Y H:i" }}
+            </p>
+
+            <form method="post"
+                  action="{% url 'course_attempt_decide' attempt.pk %}">
+                {% csrf_token %}
+
+                <button type="submit" name="action" value="approve">
+                    Onayla
+                </button>
+            </form>
+
+            <form method="post"
+                  action="{% url 'course_attempt_decide' attempt.pk %}"
+                  style="margin-top: 12px;">
+                {% csrf_token %}
+
+                <label for="reason-{{ attempt.pk }}">
+                    Ret gerekçesi
+                </label>
+
+                <textarea
+                    id="reason-{{ attempt.pk }}"
+                    name="rejection_reason"
+                    rows="3"
+                    required
+                    style="width: 100%; box-sizing: border-box;"
+                ></textarea>
+
+                <button type="submit" name="action" value="reject">
+                    Gerekçeyle reddet
+                </button>
+            </form>
+        </section>
+
+    {% empty %}
+        <p>Şu anda onay bekleyen ders kaydı bulunmuyor.</p>
+    {% endfor %}
+{% endblock %}

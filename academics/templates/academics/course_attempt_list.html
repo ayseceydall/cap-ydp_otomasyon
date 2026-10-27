@@ -1,0 +1,53 @@
+{% extends "students/base.html" %}
+
+{% block title %}Derslerim{% endblock %}
+
+{% block content %}
+    <h1>Derslerim</h1>
+
+    <p>
+        <a class="button" href="{% url 'course_attempt_create' %}">
+            + Ders seç
+        </a>
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ders kodu</th>
+                <th>Ders adı</th>
+                <th>Akademik dönem</th>
+                <th>Not</th>
+                <th>Ders durumu</th>
+                <th>Onay durumu</th>
+                <th>Ret gerekçesi</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for attempt in attempts %}
+                <tr>
+                    <td>{{ attempt.course.course_code }}</td>
+                    <td>{{ attempt.course.course_name }}</td>
+                    <td>{{ attempt.term }}</td>
+                    <td>{{ attempt.grade|default_if_none:"—" }}</td>
+                    <td>{{ attempt.get_academic_status_display }}</td>
+                    <td>{{ attempt.get_approval_status_display }}</td>
+                    <td>
+    {% if attempt.approval_status == "REJECTED" %}
+        {{ attempt.rejection_reason }}
+    {% else %}
+        —
+    {% endif %}
+</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7">
+                        Henüz ders kaydın bulunmuyor.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

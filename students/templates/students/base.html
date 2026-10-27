@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ÇAP/YDP Takip Sistemi{% endblock %}</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1050px;
+            margin: 35px auto;
+            padding: 0 18px;
+            color: #243047;
+            background: #f5f7fb;
+        }
+
+        nav {
+            display: flex;
+            gap: 18px;
+            padding: 16px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 24px;
+        }
+
+        a {
+            color: #2457a7;
+            text-decoration: none;
+        }
+
+        .panel {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+        }
+
+        input, select {
+            padding: 9px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="search"] {
+            width: 100%;
+        }
+
+        button, .button {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #2457a7;
+            color: white;
+            border: 0;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .success {
+            padding: 12px;
+            background: #e2f5e9;
+            margin-bottom: 16px;
+        }
+
+        .errorlist {
+            color: #b42318;
+        }
+    </style>
+</head>
+<body>
+   <nav>
+    {% if user.is_authenticated %}
+
+        {% if user.role == "coordinator" %}
+            <a href="{% url 'student_list' %}">Öğrenciler</a>
+            <a href="{% url 'student_create' %}">Yeni öğrenci ekle</a>
+            <a href="/admin/">Yönetim paneli</a>
+            <a href="{% url 'coordinator_course_attempts' %}">Ders onayları</a>
+
+        {% elif user.role == "student" %}
+    <a href="{% url 'my_profile' %}">Öğrenci panelim</a>
+    <a href="{% url 'course_attempt_list' %}">Derslerim</a>
+
+        {% elif user.role == "chair" %}
+            <a href="{% url 'chair_dashboard' %}">İzleme paneli</a>
+        {% endif %}
+
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Çıkış yap</button>
+        </form>
+
+    {% else %}
+        <a href="{% url 'login' %}">Giriş yap</a>
+    {% endif %}
+</nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <main class="panel">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

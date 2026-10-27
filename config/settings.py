@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'students',
     'academics',
     'documents',
+    'auditlog',
 ]
 
 AUTH_USER_MODEL = "accounts.User"

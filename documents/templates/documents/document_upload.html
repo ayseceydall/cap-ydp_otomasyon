@@ -1,0 +1,22 @@
+{% extends "students/base.html" %}
+
+{% block title %}Belge Yükle{% endblock %}
+
+{% block content %}
+    <h1>Belge Yükle</h1>
+
+    <p>
+        PDF, PNG, JPG veya JPEG dosyası yükleyebilirsin.
+        Maksimum dosya boyutu 5 MB'dır.
+    </p>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">Belgeyi yükle</button>
+
+        <a href="{% url 'document_list' %}">Vazgeç</a>
+    </form>
+{% endblock %}

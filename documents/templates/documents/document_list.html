@@ -1,0 +1,53 @@
+{% extends "students/base.html" %}
+
+{% block title %}Belge Arşivim{% endblock %}
+
+{% block content %}
+    <h1>Belge Arşivi</h1>
+
+    {% if user.role == "student" %}
+        <p>
+            <a class="button" href="{% url 'document_upload' %}">
+                + Belge yükle
+            </a>
+        </p>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Belge türü</th>
+                <th>Başlık</th>
+                <th>Dönem</th>
+                <th>Sürüm</th>
+                <th>Durum</th>
+                <th>Yüklenme tarihi</th>
+                <th>Dosya</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for document in documents %}
+                <tr>
+                    <td>{{ document.get_document_type_display }}</td>
+                    <td>{{ document.title }}</td>
+                    <td>
+                        {{ document.academic_term|default_if_none:"—" }}
+                    </td>
+                    <td>{{ document.version }}</td>
+                    <td>{{ document.get_status_display }}</td>
+                    <td>{{ document.created_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'document_download' document.pk %}">
+                            İndir
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7">Henüz belge bulunmuyor.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

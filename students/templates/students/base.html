@@ -99,9 +99,10 @@
     <a href="{% url 'my_profile' %}">Öğrenci panelim</a>
     <a href="{% url 'course_attempt_list' %}">Derslerim</a>
     <a href="{% url 'grade_submission_list' %}">Notlarım</a>
-     <a href="{% url 'grade_submission_list' %}">Notlarım</a>
+    <a href="{% url 'document_list' %}">Belgelerim</a>
      <a href="{% url 'coordinator_grade_submissions' %}">
     Dönem sonu not onayları
+    
 </a>
 
         {% elif user.role == "chair" %}

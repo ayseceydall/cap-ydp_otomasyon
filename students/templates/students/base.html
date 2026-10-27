@@ -91,12 +91,18 @@
             <a href="{% url 'student_create' %}">Yeni öğrenci ekle</a>
             <a href="/admin/">Yönetim paneli</a>
             <a href="{% url 'coordinator_course_attempts' %}">Ders onayları</a>
+            <a href="{% url 'coordinator_grade_submissions' %}">
+    Dönem sonu not onayları
+</a>
 
         {% elif user.role == "student" %}
     <a href="{% url 'my_profile' %}">Öğrenci panelim</a>
     <a href="{% url 'course_attempt_list' %}">Derslerim</a>
     <a href="{% url 'grade_submission_list' %}">Notlarım</a>
      <a href="{% url 'grade_submission_list' %}">Notlarım</a>
+     <a href="{% url 'coordinator_grade_submissions' %}">
+    Dönem sonu not onayları
+</a>
 
         {% elif user.role == "chair" %}
             <a href="{% url 'chair_dashboard' %}">İzleme paneli</a>

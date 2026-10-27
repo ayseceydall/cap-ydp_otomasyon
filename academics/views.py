@@ -11,6 +11,7 @@ from .forms import (
 )
 from .models import CourseAttempt, GradeSubmission
 
+from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -235,3 +236,96 @@ def grade_submission_create(request):
             "has_eligible_courses": eligible_attempts.exists(),
         },
     )
+
+
+@login_required(login_url="/giris/")
+def coordinator_grade_submissions(request):
+    if request.user.role != "coordinator":
+        raise PermissionDenied
+
+    submissions = GradeSubmission.objects.filter(
+        approval_status=GradeSubmission.ApprovalStatus.PENDING
+    ).select_related(
+        "course_attempt__student__user",
+        "course_attempt__course",
+        "course_attempt__term",
+        "submitted_by",
+    ).order_by("created_at")
+
+    return render(
+        request,
+        "academics/coordinator_grade_submissions.html",
+        {"submissions": submissions},
+    )
+
+
+
+@login_required(login_url="/giris/")
+@require_POST
+def decide_grade_submission(request, pk):
+    if request.user.role != "coordinator":
+        raise PermissionDenied
+
+    action = request.POST.get("action")
+
+    if action not in ("approve", "reject"):
+        messages.error(request, "Geçersiz işlem.")
+        return redirect("coordinator_grade_submissions")
+
+    reason = request.POST.get("rejection_reason", "").strip()
+
+    if action == "reject" and not reason:
+        messages.error(
+            request,
+            "Notu reddetmek için gerekçe yazmalısın.",
+        )
+        return redirect("coordinator_grade_submissions")
+
+    with transaction.atomic():
+        submission = get_object_or_404(
+            GradeSubmission.objects.select_for_update(),
+            pk=pk,
+        )
+
+        if submission.approval_status != (
+            GradeSubmission.ApprovalStatus.PENDING
+        ):
+            messages.error(
+                request,
+                "Bu not daha önce değerlendirilmiş.",
+            )
+            return redirect("coordinator_grade_submissions")
+
+        if action == "approve":
+            submission.approval_status = (
+                GradeSubmission.ApprovalStatus.APPROVED
+            )
+            submission.rejection_reason = ""
+
+            # Onaylanan notu ders denemesine aktar.
+            attempt = submission.course_attempt
+            attempt.grade = submission.grade
+            attempt.academic_status = (
+                CourseAttempt.AcademicStatus.TAKEN
+            )
+            attempt.save(
+                update_fields=[
+                    "grade",
+                    "academic_status",
+                    "updated_at",
+                ]
+            )
+
+        else:
+            submission.approval_status = (
+                GradeSubmission.ApprovalStatus.REJECTED
+            )
+            submission.rejection_reason = reason
+
+        submission.reviewed_by = request.user
+        submission.reviewed_at = timezone.now()
+        submission.save()
+
+    messages.success(request, "Not değerlendirmesi kaydedildi.")
+
+    return redirect("coordinator_grade_submissions")

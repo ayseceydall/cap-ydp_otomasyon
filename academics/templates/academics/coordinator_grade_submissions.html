@@ -1,0 +1,82 @@
+{% extends "students/base.html" %}
+
+{% block title %}Dönem Sonu Not Onayları{% endblock %}
+
+{% block content %}
+    <h1>Dönem Sonu Not Onayları</h1>
+
+    <p>
+        Öğrencilerin gönderdiği notları inceleyebilir,
+        onaylayabilir veya gerekçeyle reddedebilirsin.
+    </p>
+
+    {% for submission in submissions %}
+        <section style="border: 1px solid #ddd;
+                        padding: 18px;
+                        margin-bottom: 20px;
+                        border-radius: 8px;">
+
+            <h2>
+                {{ submission.course_attempt.course.course_code }}
+                — {{ submission.course_attempt.course.course_name }}
+            </h2>
+
+            <p>
+                <strong>Öğrenci:</strong>
+                {{ submission.course_attempt.student.student_no }}
+                —
+                {{ submission.course_attempt.student.user.get_full_name|default:submission.course_attempt.student.user.username }}
+            </p>
+
+            <p>
+                <strong>Dönem:</strong>
+                {{ submission.course_attempt.term }}
+            </p>
+
+            <p>
+                <strong>Gönderilen not:</strong>
+                {{ submission.grade }}
+            </p>
+
+            <p>
+                <strong>Gönderim tarihi:</strong>
+                {{ submission.created_at|date:"d.m.Y H:i" }}
+            </p>
+
+            <form method="post"
+                  action="{% url 'decide_grade_submission' submission.pk %}">
+                {% csrf_token %}
+
+                <button type="submit" name="action" value="approve">
+                    Notu onayla
+                </button>
+            </form>
+
+            <form method="post"
+                  action="{% url 'decide_grade_submission' submission.pk %}"
+                  style="margin-top: 12px;">
+
+                {% csrf_token %}
+
+                <label for="reason-{{ submission.pk }}">
+                    Ret gerekçesi
+                </label>
+
+                <textarea
+                    id="reason-{{ submission.pk }}"
+                    name="rejection_reason"
+                    rows="3"
+                    required
+                    style="width: 100%; box-sizing: border-box;"
+                ></textarea>
+
+                <button type="submit" name="action" value="reject">
+                    Gerekçeyle reddet
+                </button>
+            </form>
+        </section>
+
+    {% empty %}
+        <p>Şu anda onay bekleyen not bulunmuyor.</p>
+    {% endfor %}
+{% endblock %}

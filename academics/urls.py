@@ -38,4 +38,17 @@ path(
     name="grade_submission_create",
 ),
 
+
+path(
+    "koordinator/not-onaylari/",
+    views.coordinator_grade_submissions,
+    name="coordinator_grade_submissions",
+),
+path(
+    "koordinator/not-onaylari/<int:pk>/",
+    views.decide_grade_submission,
+    name="decide_grade_submission",
+),
+
+
 ]

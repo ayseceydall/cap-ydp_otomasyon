@@ -1,3 +1,4 @@
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -131,3 +132,54 @@ class StudentCreateForm(forms.Form):
         )
 
         return profile
+
+
+class GanoUpdateForm(forms.ModelForm):
+
+    class Meta:
+        model = StudentProfile
+        fields = ("gano", "gano_source")
+
+        labels = {
+            "gano": "GANO (Genel Akademik Not Ortalaması)",
+            "gano_source": "GANO kaynak bilgisi",
+        }
+
+        widgets = {
+            "gano": forms.NumberInput(
+                attrs={
+                    "min": "0",
+                    "max": "4",
+                    "step": "0.01",
+                    "placeholder": "Örn. 3.25",
+                }
+            ),
+            "gano_source": forms.TextInput(
+                attrs={
+                    "placeholder": (
+                        "Örn. Öğrencinin resmî transkripti"
+                    ),
+                }
+            ),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        gano = cleaned_data.get("gano")
+        source = (
+            cleaned_data.get("gano_source") or ""
+        ).strip()
+
+        if gano is not None and not source:
+            self.add_error(
+                "gano_source",
+                "GANO girildiğinde kaynak bilgisi zorunludur.",
+            )
+
+        cleaned_data["gano_source"] = source
+
+        return cleaned_data
+
+    
+

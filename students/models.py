@@ -1,6 +1,6 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-
 
 class StudentProfile(models.Model):
 
@@ -70,10 +70,49 @@ class StudentProfile(models.Model):
         verbose_name="Son güncellenme tarihi",
     )
 
-    def __str__(self):
+
+
+    gano = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(4),
+        ],
+        verbose_name="GANO",
+        help_text="0.00 ile 4.00 arasında olmalıdır.",
+    )
+
+    gano_source = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="GANO kaynağı",
+        help_text="Örn. resmî transkript veya öğrenci belgesi.",
+    )
+
+    gano_updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gano_updates",
+        verbose_name="GANO güncelleyen",
+    )
+
+    gano_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="GANO güncellenme tarihi",
+    )
+
+
+
+def __str__(self):
         return f"{self.student_no} - {self.user.get_full_name() or self.user.username}"
 
-    class Meta:
+class Meta:
         verbose_name = "Öğrenci"
         verbose_name_plural = "Öğrenciler"
         ordering = ["student_no"]

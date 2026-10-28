@@ -51,6 +51,9 @@
                         {{ student.get_acceptance_term_display }}
                     </td>
                     <td>{{ student.get_status_display }}</td>
+                    <a href="{% url 'coordinator_update_gano' student.pk %}">
+    GANO Düzenle
+</a>
                 </tr>
             {% empty %}
                 <tr>

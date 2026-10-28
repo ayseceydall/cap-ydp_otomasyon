@@ -1,0 +1,48 @@
+
+{% extends "students/base.html" %}
+
+{% block content %}
+<h1>Öğrenci GANO Bilgisi</h1>
+
+<p>
+    <strong>Öğrenci numarası:</strong>
+    {{ profile.student_no }}
+</p>
+
+<p>
+    <strong>Program türü:</strong>
+    {{ profile.get_program_type_display }}
+</p>
+
+<p>
+    <strong>Mevcut GANO:</strong>
+    {% if profile.gano != None %}
+        {{ profile.gano }}
+    {% else %}
+        Henüz girilmedi
+    {% endif %}
+</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">GANO Bilgisini Kaydet</button>
+</form>
+
+{% if profile.gano_updated_at %}
+    <p>
+        <strong>Son güncelleme:</strong>
+        {{ profile.gano_updated_at|date:"d.m.Y H:i" }}
+    </p>
+{% endif %}
+
+{% if profile.gano_updated_by %}
+    <p>
+        <strong>Son güncelleyen:</strong>
+        {{ profile.gano_updated_by.username }}
+    </p>
+{% endif %}
+
+{% endblock %}

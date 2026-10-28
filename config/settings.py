@@ -176,6 +176,37 @@ STORAGES = {
         ),
     },
 }
+
+
+# Supabase Storage: yalnızca bağlantı bilgileri verilmişse kullan.
+S3_STORAGE_CONFIGURED = all([
+    os.environ.get("AWS_ACCESS_KEY_ID"),
+    os.environ.get("AWS_SECRET_ACCESS_KEY"),
+    os.environ.get("AWS_STORAGE_BUCKET_NAME"),
+    os.environ.get("AWS_S3_ENDPOINT_URL"),
+])
+
+if S3_STORAGE_CONFIGURED:
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.environ["AWS_ACCESS_KEY_ID"],
+            "secret_key": os.environ["AWS_SECRET_ACCESS_KEY"],
+            "bucket_name": os.environ["AWS_STORAGE_BUCKET_NAME"],
+            "endpoint_url": os.environ["AWS_S3_ENDPOINT_URL"],
+            "region_name": os.environ.get(
+                "AWS_S3_REGION_NAME",
+                "eu-west-1",
+            ),
+            "addressing_style": "path",
+            "signature_version": "s3v4",
+            "default_acl": None,
+            "querystring_auth": True,
+            "file_overwrite": False,
+        },
+    }
+
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

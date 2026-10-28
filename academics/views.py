@@ -15,6 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from documents.models import StudentDocument
+from auditlog.services import log_action
 
 
 def get_current_student(request):
@@ -72,6 +73,19 @@ def course_attempt_create(request):
 
             attempt.save()
 
+            log_action(
+    actor=request.user,
+    action="CREATE",
+    instance=attempt,
+    summary="Öğrenci ders alma talebi oluşturdu.",
+    new_values={
+        "course_code": attempt.course.course_code,
+        "term": str(attempt.term),
+        "approval_status": attempt.approval_status,
+    },
+    request=request,
+)
+
             messages.success(
                 request,
                 "Ders kaydın koordinatörün onayına gönderildi.",
@@ -107,6 +121,7 @@ def coordinator_course_attempts(request):
         "academics/coordinator_course_attempts.html",
         {"attempts": attempts},
     )
+
 
 
 @login_required(login_url="/giris/")
@@ -156,8 +171,32 @@ def decide_course_attempt(request, pk):
 
     attempt.reviewed_by = request.user
     attempt.reviewed_at = timezone.now()
-
     attempt.save()
+
+    log_action(
+        actor=request.user,
+        action=(
+            "APPROVE"
+            if attempt.approval_status
+            == CourseAttempt.ApprovalStatus.APPROVED
+            else "REJECT"
+        ),
+        instance=attempt,
+        summary=(
+            "Ders alma talebi onaylandı."
+            if attempt.approval_status
+            == CourseAttempt.ApprovalStatus.APPROVED
+            else "Ders alma talebi reddedildi."
+        ),
+        old_values={
+            "approval_status": "PENDING",
+        },
+        new_values={
+            "approval_status": attempt.approval_status,
+        },
+        reason=attempt.rejection_reason,
+        request=request,
+    )
 
     messages.success(request, "İşlem başarıyla kaydedildi.")
 
@@ -293,6 +332,7 @@ def coordinator_grade_submissions(request):
 
 
 
+
 @login_required(login_url="/giris/")
 @require_POST
 def decide_grade_submission(request, pk):
@@ -335,7 +375,7 @@ def decide_grade_submission(request, pk):
             )
             submission.rejection_reason = ""
 
-            # Onaylanan notu ders denemesine aktar.
+            # Onaylanan notu ders kaydına aktar.
             attempt = submission.course_attempt
             attempt.grade = submission.grade
             attempt.academic_status = (
@@ -358,6 +398,33 @@ def decide_grade_submission(request, pk):
         submission.reviewed_by = request.user
         submission.reviewed_at = timezone.now()
         submission.save()
+
+        # İşlem geçmişine karar kaydı ekle.
+        log_action(
+            actor=request.user,
+            action=(
+                "APPROVE"
+                if submission.approval_status
+                == GradeSubmission.ApprovalStatus.APPROVED
+                else "REJECT"
+            ),
+            instance=submission,
+            summary=(
+                "Not bildirimi onaylandı."
+                if submission.approval_status
+                == GradeSubmission.ApprovalStatus.APPROVED
+                else "Not bildirimi reddedildi."
+            ),
+            old_values={
+                "approval_status": "PENDING",
+            },
+            new_values={
+                "approval_status": submission.approval_status,
+                "grade": str(submission.grade),
+            },
+            reason=submission.rejection_reason,
+            request=request,
+        )
 
     messages.success(request, "Not değerlendirmesi kaydedildi.")
 

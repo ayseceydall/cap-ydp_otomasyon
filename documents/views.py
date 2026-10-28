@@ -10,6 +10,7 @@ from django.views.decorators.http import require_GET
 from students.models import StudentProfile
 from .forms import StudentDocumentUploadForm  # type: ignore[reportMissingImports]
 from .models import StudentDocument
+from auditlog.services import log_action
 
 
 @login_required(login_url="/giris/")
@@ -45,6 +46,7 @@ def document_list(request):
     )
 
 
+
 @login_required(login_url="/giris/")
 def document_upload(request):
 
@@ -72,6 +74,24 @@ def document_upload(request):
 
             document.save()
 
+            log_action(
+                actor=request.user,
+                action="UPLOAD",
+                instance=document,
+                summary="Öğrenci belge yükledi.",
+                new_values={
+                    "document_type": document.document_type,
+                    "academic_term": (
+                        str(document.academic_term)
+                        if document.academic_term
+                        else ""
+                    ),
+                    "version": document.version,
+                    "status": document.status,
+                },
+                request=request,
+            )
+
             messages.success(
                 request,
                 "Belgen yüklendi ve koordinatörün incelemesine gönderildi.",
@@ -87,6 +107,7 @@ def document_upload(request):
         "documents/document_upload.html",
         {"form": form},
     )
+
 
 
 @login_required(login_url="/giris/")

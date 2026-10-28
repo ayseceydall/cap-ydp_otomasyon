@@ -1,0 +1,35 @@
+
+{% extends "students/base.html" %}
+
+{% block title %}Mesaj Ayrıntısı{% endblock %}
+
+{% block content %}
+<h1>{{ message.subject }}</h1>
+
+<p>
+    <strong>Gönderen:</strong>
+    {{ message.sender.get_full_name|default:message.sender.username }}
+</p>
+
+<p>
+    <strong>Alıcı:</strong>
+    {{ message.recipient.get_full_name|default:message.recipient.username }}
+</p>
+
+<p>
+    <strong>Gönderim tarihi:</strong>
+    {{ message.created_at|date:"d.m.Y H:i" }}
+</p>
+
+<hr>
+
+<div style="white-space: pre-wrap;">{{ message.body }}</div>
+
+<hr>
+
+<p>
+    <a href="{% url 'message_inbox' %}">Gelen Kutusu</a>
+    |
+    <a href="{% url 'message_sent' %}">Gönderilen Mesajlar</a>
+</p>
+{% endblock %}

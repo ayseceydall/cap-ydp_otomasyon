@@ -1,0 +1,21 @@
+
+{% extends "students/base.html" %}
+
+{% block title %}Mesaj Gönder{% endblock %}
+
+{% block content %}
+<h1>Yeni Mesaj</h1>
+
+<p>Mesaj göndermek istediğin kullanıcıyı seç.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit">Mesajı Gönder</button>
+</form>
+
+<p>
+    <a href="{% url 'message_inbox' %}">Gelen Kutusuna Dön</a>
+</p>
+{% endblock %}

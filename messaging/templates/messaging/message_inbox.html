@@ -1,0 +1,52 @@
+
+{% extends "students/base.html" %}
+
+{% block title %}Gelen Kutusu{% endblock %}
+
+{% block content %}
+<h1>Gelen Kutusu</h1>
+
+<p>
+    <a class="button" href="{% url 'message_compose' %}">
+        + Yeni Mesaj
+    </a>
+    <a href="{% url 'message_sent' %}">Gönderilen Mesajlar</a>
+</p>
+
+{% if messages_list %}
+    <table>
+        <thead>
+            <tr>
+                <th>Gönderen</th>
+                <th>Konu</th>
+                <th>Tarih</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in messages_list %}
+                <tr>
+                    <td>{{ item.sender.get_full_name|default:item.sender.username }}</td>
+                    <td>{{ item.subject }}</td>
+                    <td>{{ item.created_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        {% if item.read_at %}
+                            Okundu
+                        {% else %}
+                            Okunmadı
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'message_detail' item.pk %}">
+                            Mesajı Aç
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Henüz gelen mesajın bulunmuyor.</p>
+{% endif %}
+{% endblock %}

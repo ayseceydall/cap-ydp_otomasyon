@@ -1,3 +1,4 @@
+
 {% extends "students/base.html" %}
 
 {% block title %}Öğrenci Yönetimi{% endblock %}
@@ -35,6 +36,7 @@
                 <th>Program</th>
                 <th>Kabul dönemi</th>
                 <th>Durum</th>
+                <th>İşlemler</th>
             </tr>
         </thead>
 
@@ -51,13 +53,18 @@
                         {{ student.get_acceptance_term_display }}
                     </td>
                     <td>{{ student.get_status_display }}</td>
-                    <a href="{% url 'coordinator_update_gano' student.pk %}">
-    GANO Düzenle
-</a>
+                    <td>
+                        <a
+                            class="button"
+                            href="{% url 'coordinator_update_gano' student.pk %}"
+                        >
+                            GANO Düzenle
+                        </a>
+                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="5">Henüz öğrenci kaydı bulunmuyor.</td>
+                    <td colspan="6">Henüz öğrenci kaydı bulunmuyor.</td>
                 </tr>
             {% endfor %}
         </tbody>

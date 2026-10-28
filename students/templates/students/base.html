@@ -108,6 +108,9 @@
     Dönem sonu not onayları
     
 </a>
+<a href="{% url 'academic_progress' %}">
+    Akademik İlerlemem
+</a>
 
         {% elif user.role == "chair" %}
             <a href="{% url 'chair_dashboard' %}">İzleme paneli</a>

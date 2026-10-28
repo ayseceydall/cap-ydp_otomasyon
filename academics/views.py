@@ -9,7 +9,14 @@ from .forms import (
     CourseAttemptCreateForm,
     GradeSubmissionForm,
 )
-from .models import CourseAttempt, GradeSubmission
+  
+from .models import (
+    AcademicTerm,
+    Course,
+    CourseAttempt,
+    GradeSubmission,
+    StudentRequiredCourse,
+)
 
 from django.db import transaction
 from django.utils import timezone
@@ -429,3 +436,112 @@ def decide_grade_submission(request, pk):
     messages.success(request, "Not değerlendirmesi kaydedildi.")
 
     return redirect("coordinator_grade_submissions")
+
+
+@login_required(login_url="/giris/")
+def academic_progress(request):
+    student = get_current_student(request)
+
+    required_courses = list(
+        StudentRequiredCourse.objects.filter(
+            student=student,
+            status=StudentRequiredCourse.Status.ACTIVE,
+        )
+        .select_related("course")
+        .order_by("course__course_code")
+    )
+
+    approved_attempts = list(
+        CourseAttempt.objects.filter(
+            student=student,
+            approval_status=CourseAttempt.ApprovalStatus.APPROVED,
+        )
+        .exclude(
+            academic_status=CourseAttempt.AcademicStatus.REMOVED
+        )
+        .select_related("course", "term")
+        .order_by("created_at")
+    )
+
+    progress_rows = []
+
+    for required_course in required_courses:
+        course_attempts = [
+            attempt
+            for attempt in approved_attempts
+            if attempt.course_id == required_course.course_id
+        ]
+
+        completed_attempts = [
+            attempt
+            for attempt in course_attempts
+            if attempt.academic_status in (
+                CourseAttempt.AcademicStatus.PASSED,
+                CourseAttempt.AcademicStatus.EXEMPT,
+            )
+        ]
+
+        progress_rows.append({
+            "required_course": required_course,
+            "latest_attempt": (
+                course_attempts[-1]
+                if course_attempts
+                else None
+            ),
+            "completed": bool(completed_attempts),
+        })
+
+    total_count = len(progress_rows)
+    completed_count = sum(
+        1 for row in progress_rows if row["completed"]
+    )
+    remaining_count = total_count - completed_count
+
+    total_credit = sum(
+        (row["required_course"].course.credit
+         for row in progress_rows),
+        0,
+    )
+
+    completed_credit = sum(
+        (row["required_course"].course.credit
+         for row in progress_rows if row["completed"]),
+        0,
+    )
+
+    total_ects = sum(
+        (row["required_course"].course.ects
+         for row in progress_rows),
+        0,
+    )
+
+    completed_ects = sum(
+        (row["required_course"].course.ects
+         for row in progress_rows if row["completed"]),
+        0,
+    )
+
+    progress_percent = (
+        round(completed_count / total_count * 100)
+        if total_count
+        else 0
+    )
+
+    return render(
+        request,
+        "academics/academic_progress.html",
+        {
+            "progress_rows": progress_rows,
+            "total_count": total_count,
+            "completed_count": completed_count,
+            "remaining_count": remaining_count,
+            "total_credit": total_credit,
+            "completed_credit": completed_credit,
+            "remaining_credit": total_credit - completed_credit,
+            "total_ects": total_ects,
+            "completed_ects": completed_ects,
+            "remaining_ects": total_ects - completed_ects,
+            "progress_percent": progress_percent,
+        },
+    )
+

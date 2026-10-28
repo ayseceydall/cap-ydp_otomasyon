@@ -1,0 +1,118 @@
+
+{% extends "students/base.html" %}
+
+{% block content %}
+<h1>Akademik İlerlemem</h1>
+
+<p>
+    Bu sayfada zorunlu derslerini, tamamladığın dersleri ve kalan kredi/AKTS
+    miktarını görebilirsin.
+</p>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; margin: 20px 0;">
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+        <h3>Toplam zorunlu ders</h3>
+        <p>{{ total_count }}</p>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+        <h3>Tamamlanan ders</h3>
+        <p>{{ completed_count }}</p>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px;">
+        <h3>Kalan ders</h3>
+        <p>{{ remaining_count }}</p>
+    </div>
+</div>
+
+<h3>İlerleme oranı: %{{ progress_percent }}</h3>
+
+<progress value="{{ progress_percent }}" max="100" aria-label="İlerleme oranı: %{{ progress_percent }}"></progress>
+
+<h2>Kredi ve AKTS durumu</h2>
+
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Bilgi</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Toplam</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Tamamlanan</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Kalan</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="padding: 8px;">Kredi</td>
+            <td style="padding: 8px;">{{ total_credit }}</td>
+            <td style="padding: 8px;">{{ completed_credit }}</td>
+            <td style="padding: 8px;">{{ remaining_credit }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px;">AKTS</td>
+            <td style="padding: 8px;">{{ total_ects }}</td>
+            <td style="padding: 8px;">{{ completed_ects }}</td>
+            <td style="padding: 8px;">{{ remaining_ects }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Zorunlu derslerim</h2>
+
+{% if progress_rows %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Ders kodu</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Ders adı</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Kredi</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">AKTS</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Son durum</th>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">İlerleme</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in progress_rows %}
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {{ row.required_course.course.course_code }}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {{ row.required_course.course.name }}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {{ row.required_course.course.credit }}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {{ row.required_course.course.ects }}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {% if row.latest_attempt %}
+                                {{ row.latest_attempt.get_academic_status_display }}
+                            {% else %}
+                                Henüz ders kaydı yok
+                            {% endif %}
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {% if row.completed %}
+                                Tamamlandı
+                            {% else %}
+                                Devam ediyor / bekliyor
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p>Henüz zorunlu ders listesi tanımlanmamış.</p>
+{% endif %}
+
+<p style="margin-top: 20px;">
+    Not: Bir ders, sistemde PASSED veya EXEMPT olarak işaretlenirse tamamlanmış sayılır.
+    Geçme notu ve GANO kuralları ayrıca uygulanmalıdır.
+</p>
+
+{% endblock %}

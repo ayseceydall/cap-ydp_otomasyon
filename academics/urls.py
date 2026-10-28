@@ -51,4 +51,10 @@ path(
 ),
 
 
+path(
+    "ilerlemem/",
+    views.academic_progress,
+    name="academic_progress",
+),
+
 ]

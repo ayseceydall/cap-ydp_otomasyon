@@ -95,6 +95,10 @@
     Dönem sonu not onayları
 </a>
 
+<a href="{% url 'coordinator_document_list' %}">
+    Belge Onayları
+</a>
+
         {% elif user.role == "student" %}
     <a href="{% url 'my_profile' %}">Öğrenci panelim</a>
     <a href="{% url 'course_attempt_list' %}">Derslerim</a>

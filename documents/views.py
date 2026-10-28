@@ -11,6 +11,8 @@ from students.models import StudentProfile
 from .forms import StudentDocumentUploadForm  # type: ignore[reportMissingImports]
 from .models import StudentDocument
 from auditlog.services import log_action
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 
 @login_required(login_url="/giris/")
@@ -141,3 +143,107 @@ def document_download(request, pk):
         as_attachment=True,
         filename=filename,
     )
+
+
+
+@login_required(login_url="/giris/")
+def coordinator_document_list(request):
+    if request.user.role != "coordinator":
+        raise PermissionDenied
+
+    documents = (
+        StudentDocument.objects
+        .select_related("student", "uploaded_by", "academic_term")
+        .filter(status=StudentDocument.Status.PENDING)
+        .order_by("created_at")
+    )
+
+    return render(
+        request,
+        "documents/coordinator_document_list.html",
+        {"documents": documents},
+    )
+
+
+@login_required(login_url="/giris/")
+@require_POST
+def decide_document(request, pk):
+    if request.user.role != "coordinator":
+        raise PermissionDenied
+
+    document = get_object_or_404(
+        StudentDocument,
+        pk=pk,
+    )
+
+    if document.status != StudentDocument.Status.PENDING:
+        messages.error(
+            request,
+            "Bu belge daha önce değerlendirilmiş.",
+        )
+        return redirect("coordinator_document_list")
+
+    action = request.POST.get("action")
+    reason = request.POST.get("rejection_reason", "").strip()
+
+    if action == "approve":
+        document.status = StudentDocument.Status.APPROVED
+        document.rejection_reason = ""
+
+    elif action == "reject":
+        if not reason:
+            messages.error(
+                request,
+                "Belgeyi reddetmek için gerekçe yazmalısın.",
+            )
+            return redirect("coordinator_document_list")
+
+        document.status = StudentDocument.Status.REJECTED
+        document.rejection_reason = reason
+
+    else:
+        messages.error(request, "Geçersiz işlem.")
+        return redirect("coordinator_document_list")
+
+    document.reviewed_by = request.user
+    document.reviewed_at = timezone.now()
+
+    document.save(
+        update_fields=[
+            "status",
+            "rejection_reason",
+            "reviewed_by",
+            "reviewed_at",
+        ]
+    )
+
+    log_action(
+        actor=request.user,
+        action=(
+            "APPROVE"
+            if action == "approve"
+            else "REJECT"
+        ),
+        instance=document,
+        summary=(
+            "Belge onaylandı."
+            if action == "approve"
+            else "Belge reddedildi."
+        ),
+        old_values={
+            "status": "PENDING",
+        },
+        new_values={
+            "status": document.status,
+            "document_type": document.document_type,
+        },
+        reason=document.rejection_reason,
+        request=request,
+    )
+
+    messages.success(
+        request,
+        "Belge değerlendirmesi kaydedildi.",
+    )
+
+    return redirect("coordinator_document_list")

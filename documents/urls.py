@@ -11,4 +11,18 @@ urlpatterns = [
         views.document_download,
         name="document_download",
     ),
+
+    path(
+    "koordinator/",
+    views.coordinator_document_list,
+    name="coordinator_document_list",
+),
+path(
+    "koordinator/<int:pk>/karar/",
+    views.decide_document,
+    name="decide_document",
+),
+
+
+
 ]

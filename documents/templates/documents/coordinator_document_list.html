@@ -1,0 +1,74 @@
+
+{% extends "students/base.html" %}
+
+{% block content %}
+<h1>Belge Onayları</h1>
+
+<p>Koordinatör incelemesi bekleyen belgeler aşağıda listelenir.</p>
+
+{% if documents %}
+    {% for document in documents %}
+        <div style="border: 1px solid #ddd; padding: 16px; margin-bottom: 16px; border-radius: 8px;">
+
+            <h3>{{ document.title }}</h3>
+
+            <p>
+                <strong>Öğrenci numarası:</strong>
+                {{ document.student.student_no }}
+            </p>
+
+            <p>
+                <strong>Belge türü:</strong>
+                {{ document.get_document_type_display }}
+            </p>
+
+            <p>
+                <strong>Akademik dönem:</strong>
+                {{ document.academic_term|default:"Belirtilmemiş" }}
+            </p>
+
+            <p>
+                <strong>Yüklenme tarihi:</strong>
+                {{ document.created_at|date:"d.m.Y H:i" }}
+            </p>
+
+            <p>
+                <a href="{% url 'document_download' document.pk %}">
+                    Belgeyi görüntüle / indir
+                </a>
+            </p>
+
+            <form method="post" action="{% url 'decide_document' document.pk %}">
+                {% csrf_token %}
+
+                <button type="submit" name="action" value="approve">
+                    Onayla
+                </button>
+
+                <p>
+                    <label for="reason-{{ document.pk }}">
+                        Ret gerekçesi (reddederken zorunlu):
+                    </label>
+                </p>
+
+                <textarea
+                    id="reason-{{ document.pk }}"
+                    name="rejection_reason"
+                    rows="3"
+                    style="width: 100%; max-width: 500px;"
+                ></textarea>
+
+                <p>
+                    <button type="submit" name="action" value="reject">
+                        Reddet
+                    </button>
+                </p>
+            </form>
+
+        </div>
+    {% endfor %}
+{% else %}
+    <p>İncelenmeyi bekleyen belge bulunmuyor.</p>
+{% endif %}
+
+{% endblock %}

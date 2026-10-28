@@ -37,6 +37,27 @@
                     <td>{{ document.version }}</td>
                     <td>{{ document.get_status_display }}</td>
                     <td>{{ document.created_at|date:"d.m.Y H:i" }}</td>
+
+
+<p>
+    <strong>Belge sürümü:</strong>
+    {{ document.version }}
+</p>
+
+{% if document.previous_version %}
+    <p>
+        <strong>Önceki sürüm:</strong>
+        <a href="{% url 'document_download' document.previous_version.pk %}">
+            Sürüm {{ document.previous_version.version }} dosyasını indir
+        </a>
+    </p>
+{% else %}
+    <p>Bu belgenin önceki sürümü yok.</p>
+{% endif %}
+
+
+
+
                     <td>
                         <a href="{% url 'document_download' document.pk %}">
                             İndir

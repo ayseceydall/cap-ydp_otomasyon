@@ -49,9 +49,9 @@ def document_list(request):
 
 
 
+
 @login_required(login_url="/giris/")
 def document_upload(request):
-
     if request.user.role != "student":
         raise PermissionDenied
 
@@ -72,7 +72,23 @@ def document_upload(request):
             document.student = student
             document.uploaded_by = request.user
             document.status = StudentDocument.Status.PENDING
-            document.version = 1
+
+            previous_document = (
+                StudentDocument.objects.filter(
+                    student=student,
+                    document_type=document.document_type,
+                    academic_term=document.academic_term,
+                )
+                .order_by("-version", "-created_at")
+                .first()
+            )
+
+            if previous_document:
+                document.previous_version = previous_document
+                document.version = previous_document.version + 1
+            else:
+                document.previous_version = None
+                document.version = 1
 
             document.save()
 
@@ -89,6 +105,11 @@ def document_upload(request):
                         else ""
                     ),
                     "version": document.version,
+                    "previous_version_id": (
+                        previous_document.pk
+                        if previous_document
+                        else None
+                    ),
                     "status": document.status,
                 },
                 request=request,
@@ -96,7 +117,11 @@ def document_upload(request):
 
             messages.success(
                 request,
-                "Belgen yüklendi ve koordinatörün incelemesine gönderildi.",
+                (
+                    f"Belgen yüklendi. "
+                    f"Belge sürümü: {document.version}. "
+                    "Koordinatörün incelemesine gönderildi."
+                ),
             )
 
             return redirect("document_list")

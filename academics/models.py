@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
-
+from django.core.exceptions import ValidationError
 from config import settings
 from students.models import StudentProfile
 
@@ -442,3 +442,119 @@ class GradeSubmission(models.Model):
                 name="one_approved_grade_per_attempt",
             ),
         ]
+
+
+        
+class AcademicRuleVersionQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        raise ValidationError(
+            "Akademik kural sürümleri değiştirilemez; yeni sürüm oluşturun."
+        )
+
+    def delete(self):
+        raise ValidationError(
+            "Akademik kural sürümleri silinemez."
+        )
+
+
+class AcademicRuleVersionManager(
+    models.Manager.from_queryset(AcademicRuleVersionQuerySet)
+):
+    pass
+
+
+class AcademicRuleVersion(models.Model):
+    version_code = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name="Sürüm kodu",
+        help_text="Örnek: CAP-2026-01",
+    )
+
+    title = models.CharField(
+        max_length=200,
+        verbose_name="Kural sürümünün adı",
+    )
+
+    effective_from = models.DateField(
+        verbose_name="Geçerlilik başlangıcı",
+    )
+
+    effective_to = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Geçerlilik bitişi",
+        help_text="Belirtilmezse bitiş tarihi henüz tanımlanmamıştır.",
+    )
+
+    rules = models.JSONField(
+        default=dict,
+        verbose_name="Kural değerleri",
+        help_text=(
+            "Kurum tarafından belirlenen akademik kuralları JSON "
+            "biçiminde saklayın."
+        ),
+    )
+
+    notes = models.TextField(
+        blank=True,
+        verbose_name="Açıklama ve dayanak",
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="created_academic_rule_versions",
+        verbose_name="Oluşturan kullanıcı",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Oluşturulma tarihi",
+    )
+
+    objects = AcademicRuleVersionManager()
+
+    class Meta:
+        ordering = ["-effective_from", "-created_at"]
+        verbose_name = "Akademik kural sürümü"
+        verbose_name_plural = "Akademik kural sürümleri"
+
+    def clean(self):
+        super().clean()
+
+        if (
+            self.effective_to is not None
+            and self.effective_to < self.effective_from
+        ):
+            raise ValidationError({
+                "effective_to": (
+                    "Geçerlilik bitişi, başlangıç tarihinden önce olamaz."
+                )
+            })
+
+        if not isinstance(self.rules, dict):
+            raise ValidationError({
+                "rules": "Kural değerleri JSON nesnesi olmalıdır."
+            })
+
+    def save(self, *args, **kwargs):
+        if (
+            self.pk is not None
+            and type(self).objects.filter(pk=self.pk).exists()
+        ):
+            raise ValidationError(
+                "Mevcut kural sürümü değiştirilemez. Yeni sürüm oluşturun."
+            )
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError(
+            "Akademik kural sürümleri silinemez."
+        )
+
+    def __str__(self):
+        return f"{self.version_code} - {self.title}"

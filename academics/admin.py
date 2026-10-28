@@ -5,7 +5,10 @@ from .models import (
     AcademicTerm,
     StudentRequiredCourse,
     CourseAttempt,
+    AcademicRuleVersion
 )
+
+from auditlog.services import log_action
 
 
 @admin.register(Course)
@@ -108,3 +111,105 @@ class CourseAttemptAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+    
+@admin.register(AcademicRuleVersion)
+class AcademicRuleVersionAdmin(admin.ModelAdmin):
+    list_display = (
+        "version_code",
+        "title",
+        "effective_from",
+        "effective_to",
+        "created_by",
+        "created_at",
+    )
+
+    list_filter = (
+        "effective_from",
+        "effective_to",
+    )
+
+    search_fields = (
+        "version_code",
+        "title",
+        "notes",
+    )
+
+    ordering = ("-effective_from",)
+    date_hierarchy = "effective_from"
+    actions = None
+
+    def _can_access_rules(self, request):
+        user = request.user
+        return (
+            user.is_active
+            and user.is_staff
+            and (
+                user.is_superuser
+                or getattr(user, "role", None)
+                in {"coordinator", "chair"}
+            )
+        )
+
+    def has_module_permission(self, request):
+        return self._can_access_rules(request)
+
+    def has_view_permission(self, request, obj=None):
+        return self._can_access_rules(request)
+
+    def has_add_permission(self, request):
+        user = request.user
+        return (
+            user.is_active
+            and user.is_staff
+            and (
+                user.is_superuser
+                or getattr(user, "role", None) == "coordinator"
+            )
+        )
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is not None:
+            return tuple(
+                field.name
+                for field in self.model._meta.fields
+            )
+
+        return ("created_by", "created_at")
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            raise PermissionError(
+                "Mevcut akademik kural sürümleri değiştirilemez."
+            )
+
+        obj.created_by = request.user
+        obj.full_clean()
+
+        super().save_model(request, obj, form, change)
+
+        log_action(
+            actor=request.user,
+            action="CREATE",
+            instance=obj,
+            summary="Yeni akademik kural sürümü oluşturuldu.",
+            new_values={
+                "version_code": obj.version_code,
+                "title": obj.title,
+                "effective_from": str(obj.effective_from),
+                "effective_to": (
+                    str(obj.effective_to)
+                    if obj.effective_to
+                    else None
+                ),
+                "rules": obj.rules,
+            },
+            request=request,
+        )

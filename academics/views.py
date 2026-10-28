@@ -340,6 +340,7 @@ def coordinator_grade_submissions(request):
 
 
 
+
 @login_required(login_url="/giris/")
 @require_POST
 def decide_grade_submission(request, pk):
@@ -361,6 +362,20 @@ def decide_grade_submission(request, pk):
         )
         return redirect("coordinator_grade_submissions")
 
+    result_status = ""
+
+    if action == "approve":
+        result_status = request.POST.get(
+            "result_status", ""
+        ).strip().upper()
+
+        if result_status not in ("PASSED", "FAILED"):
+            messages.error(
+                request,
+                "Notu onaylamadan önce Geçti veya Kaldı seçmelisin.",
+            )
+            return redirect("coordinator_grade_submissions")
+
     with transaction.atomic():
         submission = get_object_or_404(
             GradeSubmission.objects.select_for_update(),
@@ -381,13 +396,20 @@ def decide_grade_submission(request, pk):
                 GradeSubmission.ApprovalStatus.APPROVED
             )
             submission.rejection_reason = ""
+            submission.result_status = result_status
 
-            # Onaylanan notu ders kaydına aktar.
             attempt = submission.course_attempt
             attempt.grade = submission.grade
-            attempt.academic_status = (
-                CourseAttempt.AcademicStatus.TAKEN
-            )
+
+            if result_status == "PASSED":
+                attempt.academic_status = (
+                    CourseAttempt.AcademicStatus.PASSED
+                )
+            else:
+                attempt.academic_status = (
+                    CourseAttempt.AcademicStatus.FAILED
+                )
+
             attempt.save(
                 update_fields=[
                     "grade",
@@ -406,20 +428,17 @@ def decide_grade_submission(request, pk):
         submission.reviewed_at = timezone.now()
         submission.save()
 
-        # İşlem geçmişine karar kaydı ekle.
         log_action(
             actor=request.user,
             action=(
                 "APPROVE"
-                if submission.approval_status
-                == GradeSubmission.ApprovalStatus.APPROVED
+                if action == "approve"
                 else "REJECT"
             ),
             instance=submission,
             summary=(
                 "Not bildirimi onaylandı."
-                if submission.approval_status
-                == GradeSubmission.ApprovalStatus.APPROVED
+                if action == "approve"
                 else "Not bildirimi reddedildi."
             ),
             old_values={
@@ -428,13 +447,16 @@ def decide_grade_submission(request, pk):
             new_values={
                 "approval_status": submission.approval_status,
                 "grade": str(submission.grade),
+                "result_status": submission.result_status,
             },
             reason=submission.rejection_reason,
             request=request,
         )
 
-    messages.success(request, "Not değerlendirmesi kaydedildi.")
-
+    messages.success(
+        request,
+        "Not değerlendirmesi kaydedildi.",
+    )
     return redirect("coordinator_grade_submissions")
 
 

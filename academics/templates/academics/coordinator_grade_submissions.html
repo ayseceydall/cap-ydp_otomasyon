@@ -47,6 +47,24 @@
                   action="{% url 'decide_grade_submission' submission.pk %}">
                 {% csrf_token %}
 
+
+                
+<p>
+    <label for="result-status-{{ submission.pk }}">
+        Ders sonucu:
+    </label>
+
+    <select
+        id="result-status-{{ submission.pk }}"
+        name="result_status"
+    >
+        <option value="">Sonuç seçiniz</option>
+        <option value="PASSED">Geçti</option>
+        <option value="FAILED">Kaldı</option>
+    </select>
+</p>
+
+
                 <button type="submit" name="action" value="approve">
                     Notu onayla
                 </button>

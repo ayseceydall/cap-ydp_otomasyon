@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from .forms import StudentCreateForm
 from .models import StudentProfile
+from auditlog.services import log_action
 
 
 def require_coordinator(request):
@@ -50,6 +51,19 @@ def student_create(request):
 
         if form.is_valid():
             profile = form.save()
+
+            log_action(
+    actor=request.user,
+    action="CREATE",
+    instance=profile,
+    summary="Yeni öğrenci kaydı oluşturuldu.",
+    new_values={
+        "student_no": profile.student_no,
+        "program_type": profile.program_type,
+        "status": profile.status,
+    },
+    request=request,
+)
 
             messages.success(
                 request,

@@ -79,7 +79,7 @@
                             {{ row.required_course.course.course_code }}
                         </td>
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">
-                            {{ row.required_course.course.name }}
+                            {{ row.required_course.course.course_name }}
                         </td>
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">
                             {{ row.required_course.course.credit }}
@@ -87,13 +87,34 @@
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">
                             {{ row.required_course.course.ects }}
                         </td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
-                            {% if row.latest_attempt %}
-                                {{ row.latest_attempt.get_academic_status_display }}
-                            {% else %}
-                                Henüz ders kaydı yok
-                            {% endif %}
-                        </td>
+                        
+<td style="padding: 8px; border-bottom: 1px solid #eee;">
+    {% if row.attempts %}
+        <ul>
+            {% for attempt in row.attempts %}
+                <li>
+                    <strong>{{ attempt.term }}</strong>
+                    — {{ attempt.get_academic_status_display }}
+
+                    {% if attempt.grade != None %}
+                        — Not: {{ attempt.grade }}
+                    {% endif %}
+
+                    {% if attempt.passed_term %}
+                        — Geçtiği dönem: {{ attempt.passed_term }}
+                    {% endif %}
+
+                    {% if attempt.is_historical %}
+                        (Geçmiş kayıt)
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        Henüz ders kaydı yok
+    {% endif %}
+</td>
+
                         <td style="padding: 8px; border-bottom: 1px solid #eee;">
                             {% if row.completed %}
                                 Tamamlandı

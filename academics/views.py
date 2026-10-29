@@ -460,6 +460,7 @@ def decide_grade_submission(request, pk):
     return redirect("coordinator_grade_submissions")
 
 
+
 @login_required(login_url="/giris/")
 def academic_progress(request):
     student = get_current_student(request)
@@ -481,18 +482,29 @@ def academic_progress(request):
         .exclude(
             academic_status=CourseAttempt.AcademicStatus.REMOVED
         )
-        .select_related("course", "term")
-        .order_by("created_at")
+        .select_related("course", "term", "passed_term")
+        .order_by(
+            "term__academic_year",
+            "created_at",
+            "pk",
+        )
     )
+
+    attempts_by_course = {}
+
+    for attempt in approved_attempts:
+        attempts_by_course.setdefault(
+            attempt.course_id,
+            [],
+        ).append(attempt)
 
     progress_rows = []
 
     for required_course in required_courses:
-        course_attempts = [
-            attempt
-            for attempt in approved_attempts
-            if attempt.course_id == required_course.course_id
-        ]
+        course_attempts = attempts_by_course.get(
+            required_course.course_id,
+            [],
+        )
 
         completed_attempts = [
             attempt
@@ -505,41 +517,60 @@ def academic_progress(request):
 
         progress_rows.append({
             "required_course": required_course,
+            "attempts": course_attempts,
+            "attempt_count": len(course_attempts),
             "latest_attempt": (
                 course_attempts[-1]
                 if course_attempts
                 else None
             ),
             "completed": bool(completed_attempts),
+            "completion_attempt": (
+                completed_attempts[-1]
+                if completed_attempts
+                else None
+            ),
         })
 
     total_count = len(progress_rows)
+
     completed_count = sum(
         1 for row in progress_rows if row["completed"]
     )
+
     remaining_count = total_count - completed_count
 
     total_credit = sum(
-        (row["required_course"].course.credit
-         for row in progress_rows),
+        (
+            row["required_course"].course.credit
+            for row in progress_rows
+        ),
         0,
     )
 
     completed_credit = sum(
-        (row["required_course"].course.credit
-         for row in progress_rows if row["completed"]),
+        (
+            row["required_course"].course.credit
+            for row in progress_rows
+            if row["completed"]
+        ),
         0,
     )
 
     total_ects = sum(
-        (row["required_course"].course.ects
-         for row in progress_rows),
+        (
+            row["required_course"].course.ects
+            for row in progress_rows
+        ),
         0,
     )
 
     completed_ects = sum(
-        (row["required_course"].course.ects
-         for row in progress_rows if row["completed"]),
+        (
+            row["required_course"].course.ects
+            for row in progress_rows
+            if row["completed"]
+        ),
         0,
     )
 
@@ -566,4 +597,3 @@ def academic_progress(request):
             "progress_percent": progress_percent,
         },
     )
-

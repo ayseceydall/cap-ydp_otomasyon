@@ -47,6 +47,131 @@
             color: #b42318;
         }
     </style>
+
+    
+<style>
+    :root {
+        --pink-main: #c02670;
+        --pink-dark: #9d174d;
+        --pink-light: #fff3f8;
+        --pink-border: #f2c7da;
+        --text-main: #4a2638;
+    }
+
+    body {
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        margin: 0;
+        padding: 24px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+            135deg,
+            #fff1f7,
+            #f8f1ff
+        );
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: var(--text-main);
+    }
+
+    body > div,
+    body > main,
+    main,
+    .login-container,
+    .login-card,
+    .login-box,
+    .login-form {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 480px;
+        padding: 32px;
+        border: 1px solid var(--pink-border);
+        border-radius: 22px;
+        background: #ffffff;
+        box-shadow: 0 16px 45px #9d174d14;
+    }
+
+    h1 {
+        color: var(--pink-dark);
+        font-size: 30px;
+        line-height: 1.3;
+    }
+
+    p,
+    label {
+        color: var(--text-main);
+    }
+
+    input:not([type="hidden"]),
+    select,
+    textarea {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--pink-border);
+        border-radius: 10px;
+        background: #fffafd;
+        color: var(--text-main);
+        font: inherit;
+    }
+
+    input:focus {
+        outline: 2px solid #ec489966;
+        border-color: var(--pink-main);
+    }
+
+    button,
+    input[type="submit"],
+    button[type="submit"] {
+        width: 100%;
+        padding: 13px;
+        border: 0;
+        border-radius: 11px;
+        background: linear-gradient(
+            110deg,
+            var(--pink-dark),
+            var(--pink-main)
+        );
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+
+    button:hover,
+    input[type="submit"]:hover {
+        opacity: 0.88;
+    }
+
+    .errorlist {
+        color: #b42318;
+    }
+
+    @media (max-width: 520px) {
+        body {
+            padding: 14px;
+        }
+
+        body > div,
+        body > main,
+        main,
+        .login-container,
+        .login-card,
+        .login-box,
+        .login-form {
+            padding: 22px;
+        }
+    }
+</style>
+
+
+
+
 </head>
 
 <body>

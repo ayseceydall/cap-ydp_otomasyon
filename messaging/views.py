@@ -14,6 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
 @login_required(login_url="/giris/")
 def message_compose(request):
     if getattr(request.user, "role", None) not in {
@@ -22,46 +23,56 @@ def message_compose(request):
     }:
         raise PermissionDenied
 
-    if request.method == "POST":
-        form = MessageForm(
-            request.POST,
-            user=request.user,
+    try:
+        if request.method == "POST":
+            form = MessageForm(
+                request.POST,
+                user=request.user,
+            )
+
+            if form.is_valid():
+                with transaction.atomic():
+                    message = form.save(commit=False)
+                    message.sender = request.user
+                    message.full_clean()
+                    message.save()
+
+                    log_action(
+                        actor=request.user,
+                        action="CREATE",
+                        instance=message,
+                        summary="Yeni mesaj gönderildi.",
+                        new_values={
+                            "recipient": message.recipient.username,
+                            "subject": message.subject,
+                        },
+                        request=request,
+                    )
+
+                messages.success(
+                    request,
+                    "Mesajın gönderildi.",
+                )
+                return redirect("message_sent")
+
+        else:
+            form = MessageForm(user=request.user)
+
+        return render(
+            request,
+            "messaging/message_compose.html",
+            {"form": form},
         )
 
-        if form.is_valid():
-            with transaction.atomic():
-                message = form.save(commit=False)
-                message.sender = request.user
-                message.full_clean()
-                message.save()
-
-                log_action(
-                    actor=request.user,
-                    action="CREATE",
-                    instance=message,
-                    summary="Yeni mesaj gönderildi.",
-                    new_values={
-                        "recipient": message.recipient.username,
-                        "subject": message.subject,
-                    },
-                    request=request,
-                )
-
-            messages.success(
-                request,
-                "Mesajın gönderildi.",
-            )
-            return redirect("message_sent")
-
-    else:
-        form = MessageForm(user=request.user)
-
-    return render(
-        request,
-        "messaging/message_compose.html",
-        {"form": form},
-    )
-
+    except Exception:
+        logger.exception(
+            "MESSAGE_COMPOSE_ERROR: "
+            "user_id=%s, role=%s, method=%s",
+            request.user.pk,
+            getattr(request.user, "role", None),
+            request.method,
+        )
+        raise
 
 
 @login_required(login_url="/giris/")

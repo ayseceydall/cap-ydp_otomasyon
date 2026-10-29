@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 
 from auditlog.services import log_action
 
@@ -13,16 +13,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @login_required(login_url="/giris/")
 def message_compose(request):
-   if getattr(request.user, "role", None) not in {
-    "student",
-    "coordinator",
-}:
-    raise PermissionDenied
+    if getattr(request.user, "role", None) not in {
+        "student",
+        "coordinator",
+    }:
+        raise PermissionDenied
 
     if request.method == "POST":
-        form = MessageForm(request.POST, user=request.user)
+        form = MessageForm(
+            request.POST,
+            user=request.user,
+        )
 
         if form.is_valid():
             with transaction.atomic():
@@ -43,31 +47,21 @@ def message_compose(request):
                     request=request,
                 )
 
-            messages.success(request, "Mesajın gönderildi.")
+            messages.success(
+                request,
+                "Mesajın gönderildi.",
+            )
             return redirect("message_sent")
 
-   else:
-    try:
+    else:
         form = MessageForm(user=request.user)
-        return render(
-            request,
-            "messaging/message_compose.html",
-            {"form": form},
-        )
-    except Exception:
-        logger.exception(
-            "Mesaj oluşturma sayfası açılırken hata oluştu. "
-            "Kullanıcı ID: %s, Rol: %s",
-            request.user.pk,
-            getattr(request.user, "role", None),
-        )
-        raise
 
     return render(
         request,
         "messaging/message_compose.html",
         {"form": form},
     )
+
 
 
 @login_required(login_url="/giris/")

@@ -48,11 +48,12 @@ class MessageForm(forms.ModelForm):
         if user is None:
             return
 
-        allowed_roles = {
-    "student": ("coordinator",),
-    "coordinator": ("student",),
-    "chair": (),
-}
+            allowed_roles = {
+            "student": ("coordinator",),
+            "coordinator": ("student",),
+            "chair": (),
+        }
+
 
         roles = allowed_roles.get(user.role, ())
 

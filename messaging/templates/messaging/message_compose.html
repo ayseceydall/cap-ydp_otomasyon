@@ -6,16 +6,24 @@
 {% block content %}
 <h1>Yeni Mesaj</h1>
 
-<p>Mesaj göndermek istediğin kullanıcıyı seç.</p>
+<p>Mesaj göndermek istediğin öğrenciyi veya koordinatörü seç.</p>
 
-<form method="post" enctype="multipart/form-data"></form>
+<form
+    method="post"
+    action="{% url 'message_compose' %}"
+    enctype="multipart/form-data"
+>
     {% csrf_token %}
+
+    {{ form.non_field_errors }}
     {{ form.as_p }}
 
     <button type="submit">Mesajı Gönder</button>
 </form>
 
 <p>
-    <a href="{% url 'message_inbox' %}">Gelen Kutusuna Dön</a>
+    <a href="{% url 'message_inbox' %}">
+        Gelen Kutusuna Dön
+    </a>
 </p>
 {% endblock %}

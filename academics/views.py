@@ -317,9 +317,14 @@ def grade_submission_create(request):
     )
 
 
+
 @login_required(login_url="/giris/")
 def coordinator_grade_submissions(request):
-    if request.user.role != "coordinator":
+    role = str(
+        getattr(request.user, "role", "") or ""
+    ).strip().lower()
+
+    if role != "coordinator":
         raise PermissionDenied
 
     submissions = GradeSubmission.objects.filter(
@@ -336,7 +341,6 @@ def coordinator_grade_submissions(request):
         "academics/coordinator_grade_submissions.html",
         {"submissions": submissions},
     )
-
 
 
 

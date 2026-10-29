@@ -329,6 +329,40 @@
             padding: 18px;
         }
     }
+
+
+    
+    /* Sayfanın eski genişlik sınırını kaldır */
+    body {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Üst menüyü tüm ekran genişliğine yay */
+    nav {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        border-radius: 0 0 16px 16px;
+    }
+
+    /* Ana içerik alanını genişlet */
+    main.panel {
+        width: calc(100% - 48px);
+        max-width: none;
+        box-sizing: border-box;
+        margin: 32px 24px;
+    }
+
+    @media (max-width: 640px) {
+        main.panel {
+            width: calc(100% - 24px);
+            margin: 16px 12px;
+        }
+    }
+
 </style>
 
 

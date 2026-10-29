@@ -9,7 +9,9 @@ from auditlog.services import log_action
 
 from .forms import MessageForm
 from .models import Message
+import logging
 
+logger = logging.getLogger(__name__)
 
 @login_required(login_url="/giris/")
 def message_compose(request):
@@ -44,8 +46,22 @@ def message_compose(request):
             messages.success(request, "Mesajın gönderildi.")
             return redirect("message_sent")
 
-    else:
+   else:
+    try:
         form = MessageForm(user=request.user)
+        return render(
+            request,
+            "messaging/message_compose.html",
+            {"form": form},
+        )
+    except Exception:
+        logger.exception(
+            "Mesaj oluşturma sayfası açılırken hata oluştu. "
+            "Kullanıcı ID: %s, Rol: %s",
+            request.user.pk,
+            getattr(request.user, "role", None),
+        )
+        raise
 
     return render(
         request,

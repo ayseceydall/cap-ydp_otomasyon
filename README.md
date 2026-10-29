@@ -111,6 +111,4 @@ Projenin temel özelliklerini geliştirerek canlı ortamda çalışır hâle get
 
 Bazı ayrıntılı akademik ve idari işlemlerin geliştirilmesi ve doğrulanması devam ediyor. Bu nedenle proje şu an temel işlevleri çalışan, geliştirilmeye açık bir uygulama durumunda.
 
-## Veri Gizliliği
 
-Testlerde yalnızca sentetik veriler kullanılmalıdır. Gerçek öğrenci bilgileri, kişisel belgeler, kullanıcı parolaları ve gizli bağlantı anahtarları kaynak kod deposuna eklenmemelidir.

@@ -38,22 +38,20 @@ class MessageForm(forms.ModelForm):
             ),
         }
 
+   
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["recipient"].queryset = (
-            User.objects.none()
-        )
+        self.fields["recipient"].queryset = User.objects.none()
 
         if user is None:
             return
 
-            allowed_roles = {
+        allowed_roles = {
             "student": ("coordinator",),
             "coordinator": ("student",),
             "chair": (),
         }
-
 
         roles = allowed_roles.get(user.role, ())
 
@@ -63,7 +61,11 @@ class MessageForm(forms.ModelForm):
                 role__in=roles,
             )
             .exclude(pk=user.pk)
-            .order_by("first_name", "last_name", "username")
+            .order_by(
+                "first_name",
+                "last_name",
+                "username",
+            )
         )
 
     def clean_subject(self):

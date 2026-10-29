@@ -41,6 +41,21 @@ class Message(models.Model):
         verbose_name="Mesaj içeriği",
     )
 
+    
+    attachment = models.FileField(
+        upload_to="message_attachments/%Y/%m/",
+        blank=True,
+        null=True,
+        verbose_name="Mesaj eki",
+    )
+
+    attachment_original_name = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Ek dosyanın adı",
+    )
+
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Gönderim tarihi",

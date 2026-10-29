@@ -20,6 +20,13 @@ urlpatterns = [
         views.message_sent,
         name="message_sent",
     ),
+
+    path(
+    "<int:pk>/ek-indir/",
+    views.message_attachment_download,
+    name="message_attachment_download",
+),
+
     path(
         "<int:pk>/",
         views.message_detail,

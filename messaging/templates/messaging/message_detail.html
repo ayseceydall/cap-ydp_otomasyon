@@ -25,6 +25,18 @@
 
 <div style="white-space: pre-wrap;">{{ message.body }}</div>
 
+{% if message.attachment %}
+    <p>
+        <strong>Mesaj eki:</strong>
+        {{ message.attachment_original_name|default:message.attachment.name }}
+
+        <a href="{% url 'message_attachment_download' message.pk %}">
+            Eki indir
+        </a>
+    </p>
+{% endif %}
+
+
 <hr>
 
 

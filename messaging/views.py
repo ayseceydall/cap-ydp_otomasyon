@@ -4,8 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import FileResponse, Http404
+from django.db.models import Q
 
 from auditlog.services import log_action
+import os
 
 from .forms import MessageForm
 from .models import Message
@@ -27,6 +30,7 @@ def message_compose(request):
         if request.method == "POST":
             form = MessageForm(
                 request.POST,
+                request.FILES,
                 user=request.user,
             )
 
@@ -34,6 +38,18 @@ def message_compose(request):
                 with transaction.atomic():
                     message = form.save(commit=False)
                     message.sender = request.user
+
+                    uploaded_attachment = (
+                        form.cleaned_data.get("attachment")
+                    )
+
+                    if uploaded_attachment:
+                        message.attachment_original_name = (
+                            os.path.basename(
+                                uploaded_attachment.name
+                            )[:255]
+                        )
+
                     message.full_clean()
                     message.save()
 
@@ -45,6 +61,12 @@ def message_compose(request):
                         new_values={
                             "recipient": message.recipient.username,
                             "subject": message.subject,
+                            "has_attachment": bool(
+                                message.attachment
+                            ),
+                            "attachment_name": (
+                                message.attachment_original_name
+                            ),
                         },
                         request=request,
                     )
@@ -73,6 +95,7 @@ def message_compose(request):
             request.method,
         )
         raise
+
 
 
 @login_required(login_url="/giris/")
@@ -163,3 +186,37 @@ def message_detail(request, pk):
             pk,
         )
         raise
+
+
+
+@login_required(login_url="/giris/")
+def message_attachment_download(request, pk):
+    # Bölüm başkanı yalnızca görüntüleme yapabilir.
+    # Mesajın tarafları kendi mesajlarının eklerini indirebilir.
+    if getattr(request.user, "role", None) == "chair":
+        queryset = Message.objects.all()
+    else:
+        queryset = Message.objects.filter(
+            Q(sender=request.user) | Q(recipient=request.user)
+        )
+
+    message = get_object_or_404(queryset, pk=pk)
+
+    if not message.attachment:
+        raise Http404("Bu mesajda indirilecek ek bulunamadı.")
+
+    try:
+        file_handle = message.attachment.open("rb")
+    except (FileNotFoundError, OSError):
+        raise Http404("Ek dosya bulunamadı.")
+
+    filename = os.path.basename(
+        message.attachment_original_name
+        or message.attachment.name
+    )
+
+    return FileResponse(
+        file_handle,
+        as_attachment=True,
+        filename=filename,
+    )

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from auditlog.services import log_action
 
@@ -121,37 +121,45 @@ def message_sent(request):
     )
 
 
+
 @login_required(login_url="/giris/")
 def message_detail(request, pk):
-    if request.user.role == "chair":
-        # Bölüm başkanı mesajları yalnızca görüntüler.
-        queryset = Message.objects.all()
-    else:
-        # Diğer kullanıcılar yalnızca kendi mesajlarını görebilir.
-        queryset = (
-            Message.objects.filter(recipient=request.user)
-            | Message.objects.filter(sender=request.user)
+    try:
+        if request.user.role == "chair":
+            queryset = Message.objects.all()
+        else:
+            queryset = (
+                Message.objects.filter(recipient=request.user)
+                | Message.objects.filter(sender=request.user)
+            )
+
+        message = get_object_or_404(
+            queryset,
+            pk=pk,
         )
 
-    message = get_object_or_404(
-        queryset,
-        pk=pk,
-    )
+        if (
+            request.user.role != "chair"
+            and message.recipient_id == request.user.pk
+            and message.read_at is None
+        ):
+            from django.utils import timezone
 
-    # Bölüm başkanı mesajı açtığında okundu durumu değişmez.
-    # Yalnızca mesajın alıcısı okundu durumunu güncelleyebilir.
-    if (
-        request.user.role != "chair"
-        and message.recipient_id == request.user.pk
-        and message.read_at is None
-    ):
-        from django.utils import timezone
+            message.read_at = timezone.now()
+            message.save(update_fields=["read_at"])
 
-        message.read_at = timezone.now()
-        message.save(update_fields=["read_at"])
+        return render(
+            request,
+            "messaging/message_detail.html",
+            {"message": message},
+        )
 
-    return render(
-        request,
-        "messaging/message_detail.html",
-        {"message": message},
-    )
+    except Exception:
+        logger.exception(
+            "MESSAGE_DETAIL_ERROR: "
+            "user_id=%s, role=%s, message_id=%s",
+            request.user.pk,
+            getattr(request.user, "role", None),
+            pk,
+        )
+        raise

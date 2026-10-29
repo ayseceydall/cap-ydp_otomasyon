@@ -81,6 +81,26 @@
             color: #b42318;
         }
     </style>
+    
+<style>
+    .message-badge {
+        display: inline-block;
+        min-width: 18px;
+        padding: 2px 6px;
+        margin-left: 4px;
+        border-radius: 12px;
+        background: #dc3545;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+    }
+</style>
+
+
+
+
+
 </head>
 <body>
    <nav>
@@ -99,7 +119,16 @@
     Belge Onayları
 </a>
 
-<a href="{% url 'message_inbox' %}">Mesajlar</a>
+
+<a href="{% url 'message_inbox' %}">
+    Mesajlar
+    {% if unread_message_count > 0 %}
+        <span class="message-badge">
+            {{ unread_message_count }}
+        </span>
+    {% endif %}
+</a>
+
 
         {% elif user.role == "student" %}
     <a href="{% url 'my_profile' %}">Öğrenci panelim</a>
@@ -114,13 +143,31 @@
     Akademik İlerlemem
 </a>
 
-<a href="{% url 'message_inbox' %}">Mesajlar</a>
+
+<a href="{% url 'message_inbox' %}">
+    Mesajlar
+    {% if unread_message_count > 0 %}
+        <span class="message-badge">
+            {{ unread_message_count }}
+        </span>
+    {% endif %}
+</a>
+
 
 
 
         {% elif user.role == "chair" %}
             <a href="{% url 'chair_dashboard' %}">İzleme paneli</a>
-            <a href="{% url 'message_inbox' %}">Mesajlar</a>
+            
+<a href="{% url 'message_inbox' %}">
+    Mesajlar
+    {% if unread_message_count > 0 %}
+        <span class="message-badge">
+            {{ unread_message_count }}
+        </span>
+    {% endif %}
+</a>
+
         {% endif %}
 
         <form action="{% url 'logout' %}" method="post">

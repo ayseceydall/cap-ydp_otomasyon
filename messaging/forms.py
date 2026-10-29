@@ -49,10 +49,10 @@ class MessageForm(forms.ModelForm):
             return
 
         allowed_roles = {
-            "student": ("coordinator", "chair"),
-            "coordinator": ("student", "chair"),
-            "chair": ("student", "coordinator"),
-        }
+    "student": ("coordinator",),
+    "coordinator": ("student",),
+    "chair": (),
+}
 
         roles = allowed_roles.get(user.role, ())
 

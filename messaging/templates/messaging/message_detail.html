@@ -27,9 +27,16 @@
 
 <hr>
 
+
 <p>
     <a href="{% url 'message_inbox' %}">Gelen Kutusu</a>
-    |
-    <a href="{% url 'message_sent' %}">Gönderilen Mesajlar</a>
+
+    {% if user.role != "chair" %}
+        |
+        <a href="{% url 'message_sent' %}">
+            Gönderilen Mesajlar
+        </a>
+    {% endif %}
 </p>
+
 {% endblock %}

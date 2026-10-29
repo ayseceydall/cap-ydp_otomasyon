@@ -6,12 +6,22 @@
 {% block content %}
 <h1>Gelen Kutusu</h1>
 
-<p>
-    <a class="button" href="{% url 'message_compose' %}">
-        + Yeni Mesaj
-    </a>
-    <a href="{% url 'message_sent' %}">Gönderilen Mesajlar</a>
-</p>
+
+{% if user.role != "chair" %}
+    <p>
+        <a class="button" href="{% url 'message_compose' %}">
+            + Yeni Mesaj
+        </a>
+        <a href="{% url 'message_sent' %}">
+            Gönderilen Mesajlar
+        </a>
+    </p>
+{% else %}
+    <p>
+        Bölüm başkanı görünümü: Mesaj arşivi salt okunurdur.
+    </p>
+{% endif %}
+
 
 {% if messages_list %}
     <table>
